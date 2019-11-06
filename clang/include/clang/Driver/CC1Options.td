@@ -618,6 +618,11 @@ def compiler_options_dump : Flag<["-"], "compiler-options-dump">,
 def print_dependency_directives_minimized_source : Flag<["-"],
   "print-dependency-directives-minimized-source">,
   HelpText<"Print the output of the dependency directives source minimizer">;
+
+// added by chenxiong start
+def enable_profiling_value : Joined<["-"], "enable_profiling=">,
+  HelpText<"Do profiling for each function.">;
+// added by chenxiong end
 }
 
 def emit_llvm_uselists : Flag<["-"], "emit-llvm-uselists">,

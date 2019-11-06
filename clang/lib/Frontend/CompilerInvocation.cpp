@@ -1336,6 +1336,12 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
     }
   }
 
+	// added by chenxiong start
+	if (Args.hasArg(OPT_enable_profiling_value)) {
+		Opts.enable_profiling = true;
+	}
+	// added by chenxiong end
+
   Opts.BranchTargetEnforcement = Args.hasArg(OPT_mbranch_target_enforce);
 
   Opts.KeepStaticConsts = Args.hasArg(OPT_fkeep_static_consts);

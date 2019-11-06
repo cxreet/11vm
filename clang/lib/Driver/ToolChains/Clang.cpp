@@ -3486,6 +3486,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // FIXME: Implement custom jobs for internal actions.
   CmdArgs.push_back("-cc1");
 
+	// added by chenxiong start
+	if (Args.getLastArg(options::OPT_enable_profiling_EQ)) {
+		CmdArgs.push_back("-enable_profiling=1");
+	}
+	// added by chenxiong end
+
   // Add the "effective" target triple.
   CmdArgs.push_back("-triple");
   CmdArgs.push_back(Args.MakeArgString(TripleStr));

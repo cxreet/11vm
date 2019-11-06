@@ -69,6 +69,9 @@
 #include "llvm/Transforms/Utils/EntryExitInstrumenter.h"
 #include "llvm/Transforms/Utils/NameAnonGlobals.h"
 #include "llvm/Transforms/Utils/SymbolRewriter.h"
+// added by chenxiong start
+#include "llvm/Transforms/Scalar/EnableProfiling.h"
+// added by chenxiong end
 #include <memory>
 using namespace clang;
 using namespace llvm;
@@ -717,6 +720,17 @@ void EmitAssemblyHelper::CreatePasses(legacy::PassManager &MPM,
   if (!CodeGenOpts.SampleProfileFile.empty())
     PMBuilder.PGOSampleUse = CodeGenOpts.SampleProfileFile;
 
+	// added by chenxiong start
+	if(CodeGenOpts.enable_profiling) {
+		if(PMBuilder.OptLevel < 1) {
+			FPM.add(createSROAPass());
+			MPM.add(createPromoteMemoryToRegisterPass());
+		}
+		MPM.add(createEnableProfilingPass());
+		printf("create EnableProfiling pass\n");
+	}
+	// added by chenxiong end
+	
   PMBuilder.populateFunctionPassManager(FPM);
   PMBuilder.populateModulePassManager(MPM);
 }

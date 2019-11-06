@@ -3223,6 +3223,10 @@ defm stack_arrays : BooleanFFlag<"stack-arrays">, Group<gfortran_Group>;
 defm underscoring : BooleanFFlag<"underscoring">, Group<gfortran_Group>;
 defm whole_file : BooleanFFlag<"whole-file">, Group<gfortran_Group>;
 
+// added by chenxiong begin
+def enable_profiling_EQ : Joined<["-", "--"], "enable_profiling=">, Flags<[DriverOption]>,
+  HelpText<"Do profiling for each function.">;
+// added by chenxiong end
 
 include "CC1Options.td"
 
