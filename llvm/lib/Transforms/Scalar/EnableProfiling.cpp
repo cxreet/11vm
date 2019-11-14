@@ -75,33 +75,6 @@ public:
 	}
 	//============string split ends==============
 	
-	Value* getOrCreateGlobalString(Module& M, string val, string name)
-	{
-		GlobalVariable* g_v = M.getGlobalVariable(name);
-		Type* char_ty = Type::getInt8Ty(M.getContext());
-		Type* array_ty = ArrayType::get(char_ty, val.length()+1);
-		if (!g_v)
-		{
-			GlobalVariable* new_g_v = new GlobalVariable(M, array_ty, false, GlobalValue::ExternalWeakLinkage, 0, name);
-			new_g_v->setAlignment(1);
-
-			Constant *initializer = ConstantDataArray::getString(M.getContext(), val, true);
-			new_g_v->setInitializer(initializer);
-
-			g_v = new_g_v;
-		}
-		//g_v = M.getGlobalVariable(name);
-		
-		assert(g_v);
-
-		std::vector<Constant*> indices;
-		ConstantInt* const_int = ConstantInt::get(M.getContext(), APInt(64, StringRef("0"), 8));
-		indices.push_back(const_int);
-		indices.push_back(const_int);
-		Constant* g_v_ptr = ConstantExpr::getGetElementPtr(array_ty, g_v, indices);
-		return g_v_ptr;
-	}
-	
 	void record_cov(Module& M, Function& F, int id)
 	{
 		// first basic block
@@ -180,7 +153,7 @@ public:
 		GlobalVariable* cov_sh_mem = M.getGlobalVariable(cov_sh_mem_name);
 		if (!cov_sh_mem) {
 			cov_sh_mem = new GlobalVariable(M, i32PtrTy, false,
-				GlobalVariable::ExternalWeakLinkage, ConstantPointerNull::get(i32PtrTy), cov_sh_mem_name);
+				GlobalVariable::CommonLinkage, ConstantPointerNull::get(i32PtrTy), cov_sh_mem_name);
 			cov_sh_mem->setAlignment(4);
 		}
 
@@ -197,11 +170,11 @@ public:
 		Value* cmp_cov_sh_mem = builder.CreateICmpEQ(load_cov_sh_mem, ConstantPointerNull::get(i32PtrTy));
 		builder.CreateCondBr(cmp_cov_sh_mem, get_shm_bb, record_bb);
 
-		//%x = call i32 @shmget(285738243, i64 458168, i32 432)
+		//%x = call i32 @shmget(285738243, i64 1158796, i32 144)
 		builder.SetInsertPoint(get_shm_bb);
 		vector<Value*> shm_get_params;
 		shm_get_params.push_back(ConstantInt::get(builder.getInt32Ty(), 285738243));
-		shm_get_params.push_back(ConstantInt::get(builder.getInt64Ty(), 458168));
+		shm_get_params.push_back(ConstantInt::get(builder.getInt64Ty(), 1158796));
 		shm_get_params.push_back(ConstantInt::get(builder.getInt32Ty(), 144));
 		Value* shmget_call = builder.CreateCall(shm_get, shm_get_params, "call_shmget");
 		//%y = call i8* @shmat(i32 %x, i8* null, i32 0)
@@ -298,6 +271,7 @@ bool EnableProfilingPass::runOnModule(Module &M) {
 		read_indexes();
 	}
 	
+	/*	
 	StringRef module_name = M.getName();
 	StringRef base_code = StringRef("../../base");
 	StringRef testing_code = StringRef("../../testing");
@@ -309,6 +283,7 @@ bool EnableProfilingPass::runOnModule(Module &M) {
 		errs() << "skip " << module_name << '\n';
 		return false;
 	}
+	*/
 
 	for (Function &F : M)
 	{
@@ -317,7 +292,8 @@ bool EnableProfilingPass::runOnModule(Module &M) {
 			continue;
 		instrumentFunction(F, M, TaintedFuncs[func_name]);
 	}
-
+	
+	/*
 	std::string module_path = M.getName().str();
 	errs() << "++++ " << module_path << '\n';
 
@@ -329,6 +305,7 @@ bool EnableProfilingPass::runOnModule(Module &M) {
 	llvm::raw_fd_ostream OS(module_path, EC, sys::fs::F_None);
 	WriteBitcodeToFile(M, OS);
 	OS.flush();
+	*/
 
   return true;
 }

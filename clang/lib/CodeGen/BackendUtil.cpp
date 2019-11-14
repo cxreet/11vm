@@ -727,7 +727,6 @@ void EmitAssemblyHelper::CreatePasses(legacy::PassManager &MPM,
 			MPM.add(createPromoteMemoryToRegisterPass());
 		}
 		MPM.add(createEnableProfilingPass());
-		printf("create EnableProfiling pass\n");
 	}
 	// added by chenxiong end
 	
