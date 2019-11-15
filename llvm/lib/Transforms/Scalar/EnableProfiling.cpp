@@ -32,7 +32,7 @@ class EnableProfilingPass : public ModulePass {
 
 public:
   static char ID;
-	static map<string, int> TaintedFuncs;
+	static map<string, map<string, int> > FunctionIndexes;
 	void read_indexes();
 
   EnableProfilingPass()
@@ -216,7 +216,7 @@ public:
 } // end anonymous namespace
 
 char EnableProfilingPass::ID = 0;
-map<string, int> EnableProfilingPass::TaintedFuncs = map<string, int>();
+map<string, map<string, int> > EnableProfilingPass::FunctionIndexes = map<string, map<string, int> >();
 
 INITIALIZE_PASS_BEGIN(EnableProfilingPass, "enable-profiling",
 		"Do profiling for each function. ",
@@ -228,8 +228,6 @@ INITIALIZE_PASS_END(EnableProfilingPass, "enable-profiling",
 
 void EnableProfilingPass::instrumentFunction(Function& F, Module& M, int idx)
 {
-	if (F.isDeclaration() || F.isIntrinsic() || F.empty())
-		return;
 	//errs() << F << '\n';
 	record_cov(M, F, idx);
 	//errs() << F << '\n';
@@ -237,7 +235,7 @@ void EnableProfilingPass::instrumentFunction(Function& F, Module& M, int idx)
 
 void EnableProfilingPass::read_indexes()
 {
-	const char* index_file = "/home/chenxiong/static_out/index.txt";
+	const char* index_file = "/home/chenxiong/out/unique_indexes.txt";
 
 	ifstream infile = ifstream(index_file);
 	if (!infile.is_open())
@@ -247,59 +245,55 @@ void EnableProfilingPass::read_indexes()
 	while (getline(infile, line))
 	{
 		vector<string> tokens = split(line, ' ');
-		int idx = 0;
-		if (tokens[0][0] == '+')
-		{
-			idx = stoi(tokens[0].substr(1));
-		} else {
-			idx = stoi(tokens[0]);
-		}
+		string file_name = tokens[0];
 
-		int l = tokens[1].length();
-		if (tokens[1][l-1] == '\n')
-			TaintedFuncs[tokens[1].substr(0, l-1)] = idx;
-		else
-			TaintedFuncs[tokens[1]] = idx;
+		FunctionIndexes[file_name] = map<string, int> ();
+
+		int function_num = (tokens.size() - 1) / 2;
+		for (int i = 0; i < function_num; i++) {
+			int idx = stoi(tokens[i*2+1]);
+			string func_name = tokens[i*2+2];
+			FunctionIndexes[file_name][func_name] =  idx;
+		}
 	}
 	infile.close();
 }
 
 bool EnableProfilingPass::runOnModule(Module &M) {
 	
-	if (TaintedFuncs.size() == 0)
+	if (FunctionIndexes.size() == 0)
 	{
 		read_indexes();
 	}
-	
-	/*	
-	StringRef module_name = M.getName();
-	StringRef base_code = StringRef("../../base");
-	StringRef testing_code = StringRef("../../testing");
-	StringRef buildtools_code = StringRef("../../buildtools");
-	StringRef chrome_test_code = StringRef("../../chrome/test");
-	if (module_name.startswith(base_code) || module_name.startswith(testing_code) ||
-			module_name.startswith(buildtools_code)  || module_name.startswith(chrome_test_code))
-	{
-		errs() << "skip " << module_name << '\n';
-		return false;
-	}
-	*/
 
+	std::string module_path = M.getName().str();
+	if (FunctionIndexes.find(module_path) == FunctionIndexes.end())
+		errs() << "Cannot find indexes for " << module_path << '\n';
+
+	map<string, int> function_index_map = FunctionIndexes[module_path];
+	
 	for (Function &F : M)
 	{
-		string func_name = F.getName().str();
-		if (TaintedFuncs.find(func_name) == TaintedFuncs.end())
+		// skip special functions
+		if (F.isDeclaration() || F.isIntrinsic() || F.empty())
 			continue;
-		instrumentFunction(F, M, TaintedFuncs[func_name]);
+
+		string func_name = F.getName().str();
+		if (function_index_map.find(func_name) == function_index_map.end()) {
+			errs() << "Cannot find index for " << func_name << '\n';
+			continue;
+		}
+
+		instrumentFunction(F, M, function_index_map[func_name]);
 	}
 	
-	/*
+	/*	
 	std::string module_path = M.getName().str();
 	errs() << "++++ " << module_path << '\n';
 
 	replace(module_path, "/", "@");
 	replace(module_path, ".", "$");
-	module_path = "/home/chenxiong/" + module_path;
+	module_path = "/home/chenxiong/bitcodes/" + module_path;
 
 	std::error_code EC;
 	llvm::raw_fd_ostream OS(module_path, EC, sys::fs::F_None);
