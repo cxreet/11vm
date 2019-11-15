@@ -622,6 +622,8 @@ def print_dependency_directives_minimized_source : Flag<["-"],
 // added by chenxiong start
 def enable_profiling_value : Joined<["-"], "enable_profiling=">,
   HelpText<"Do profiling for each function.">;
+def enable_marking_value : Joined<["-"], "enable_marking=">,
+  HelpText<"Do marking for each function.">;
 // added by chenxiong end
 }
 

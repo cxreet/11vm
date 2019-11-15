@@ -3490,6 +3490,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 	if (Args.getLastArg(options::OPT_enable_profiling_EQ)) {
 		CmdArgs.push_back("-enable_profiling=1");
 	}
+	if (Args.getLastArg(options::OPT_enable_marking_EQ)) {
+		CmdArgs.push_back("-enable_marking=1");
+	}
 	// added by chenxiong end
 
   // Add the "effective" target triple.
