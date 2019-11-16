@@ -82,30 +82,27 @@ public:
 		IRBuilder <> builder(M.getContext());
 
 		// the new basic blocks for instrumentation:
-		// if (!is_func_marked) {
-		//  is_func_marked = true;
-		// }
+		// cx_global_function_id = id
+		// jmp entry
+		//
 		// entry:
 		//
+		// exit
 		BasicBlock* mark_bb = BasicBlock::Create(M.getContext(), entry_bb->getName() + ".mark_cov", &F, entry_bb);
-		BasicBlock* check_mark_bb = BasicBlock::Create(M.getContext(), entry_bb->getName() + ".check_mark", &F, mark_bb);
 
-		// create global variable for marking only once, initialized to 0
-		string func_name = F.getName().str();
-		string is_func_marked = "is_marked_" + std::to_string(id);
-		Type* i8Ty = builder.getInt8Ty();
-		GlobalVariable* is_marked = new GlobalVariable(M, i8Ty, false, 
-				GlobalValue::PrivateLinkage, ConstantInt::get(i8Ty, 0), is_func_marked);
+		PointerType* i32PtrTy = PointerType::get(IntegerType::get(M.getContext(), 32), 0);
+		string cx_global_function_id_name = "cx_global_function_id";
+		GlobalVariable* cx_global_function_id = M.getGlobalVariable(cx_global_function_id_name);
+		if (!cx_global_function_id) {
+			cx_global_function_id = new GlobalVariable(M, i32PtrTy, false,
+				GlobalVariable::CommonLinkage, ConstantPointerNull::get(i32PtrTy), cx_global_function_id_name);
+			cx_global_function_id->setAlignment(4);
+		}
 
-		// if is_func_name_marked == 0
-		builder.SetInsertPoint(check_mark_bb);
-		Value* load_inst = builder.CreateLoad(i8Ty, is_marked);
-		Value* cmp_inst = builder.CreateICmpEQ(load_inst, ConstantInt::get(i8Ty, 0));
-		builder.CreateCondBr(cmp_inst, mark_bb, entry_bb);
-
-		// set is_func_name_marked = 1
+		// cx_global_function_id = id
 		builder.SetInsertPoint(mark_bb);
-		builder.CreateStore(ConstantInt::get(i8Ty, 1), is_marked);
+		Type* i32Ty = builder.getInt32Ty();
+		builder.CreateStore(ConstantInt::get(i32Ty, id), cx_global_function_id);
 		builder.CreateBr(entry_bb);
 
 	}	
