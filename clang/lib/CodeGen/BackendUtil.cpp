@@ -721,6 +721,9 @@ void EmitAssemblyHelper::CreatePasses(legacy::PassManager &MPM,
   if (!CodeGenOpts.SampleProfileFile.empty())
     PMBuilder.PGOSampleUse = CodeGenOpts.SampleProfileFile;
 
+  PMBuilder.populateFunctionPassManager(FPM);
+  PMBuilder.populateModulePassManager(MPM);
+
 	// added by chenxiong start
 	if(CodeGenOpts.enable_profiling) {
 		if(PMBuilder.OptLevel < 1) {
@@ -737,9 +740,6 @@ void EmitAssemblyHelper::CreatePasses(legacy::PassManager &MPM,
 		MPM.add(createEnableMarkingPass());
 	}
 	// added by chenxiong end
-	
-  PMBuilder.populateFunctionPassManager(FPM);
-  PMBuilder.populateModulePassManager(MPM);
 }
 
 static void setCommandLineOpts(const CodeGenOptions &CodeGenOpts) {
