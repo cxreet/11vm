@@ -43,11 +43,12 @@ public:
   bool runOnModule(Module &M) override;
 
 	void instrumentFunction(Function& F, Module& M, int idx);
-
+	
+	/*	
   void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.setPreservesCFG();
     AU.addRequired<LoopInfoWrapperPass>();
   }
+	*/
 
 	void replace(std::string& str, const std::string& from, const std::string& to) {
 		if(from.empty())
@@ -109,7 +110,7 @@ public:
 };
 } // end anonymous namespace
 
-char EnableMarkingPass::ID = 0;
+char EnableMarkingPass::ID = 42;
 map<string, map<string, int> > EnableMarkingPass::FunctionIndexes = map<string, map<string, int> >();
 
 INITIALIZE_PASS_BEGIN(EnableMarkingPass, "enable-marking",
