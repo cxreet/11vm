@@ -181,7 +181,7 @@ bool EnableMarkingPass::runOnModule(Module &M) {
 	}
 	
 	/*	
-	std::string module_path = M.getName().str();
+	//std::string module_path = M.getName().str();
 	errs() << "++++ " << module_path << '\n';
 
 	replace(module_path, "/", "@");
