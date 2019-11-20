@@ -237,7 +237,7 @@ void EnableProfilingPass::instrumentFunction(Function& F, Module& M, int idx)
 
 void EnableProfilingPass::read_indexes()
 {
-	const char* index_file = "/home/chenxiong/out/unique_indexes.txt";
+	const char* index_file = "/mnt/sdb/chenxiong/out/unique_indexes.txt";
 
 	ifstream infile = ifstream(index_file);
 	if (!infile.is_open())

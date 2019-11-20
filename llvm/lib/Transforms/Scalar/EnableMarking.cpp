@@ -128,7 +128,7 @@ void EnableMarkingPass::instrumentFunction(Function& F, Module& M, int idx)
 
 void EnableMarkingPass::read_indexes()
 {
-	const char* index_file = "/home/chenxiong/out/unique_indexes.txt";
+	const char* index_file = "/mnt/sdb/chenxiong/out/unique_indexes.txt";
 
 	ifstream infile = ifstream(index_file);
 	if (!infile.is_open())
@@ -181,12 +181,12 @@ bool EnableMarkingPass::runOnModule(Module &M) {
 	}
 	
 	/*	
-	//std::string module_path = M.getName().str();
+	std::string module_path = M.getName().str();
 	errs() << "++++ " << module_path << '\n';
 
 	replace(module_path, "/", "@");
 	replace(module_path, ".", "$");
-	module_path = "/home/chenxiong/bitcodes/" + module_path;
+	module_path = "/mnt/sdb/chenxiong/bitcodes/" + module_path;
 
 	std::error_code EC;
 	llvm::raw_fd_ostream OS(module_path, EC, sys::fs::F_None);
