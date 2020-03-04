@@ -1343,6 +1343,9 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
 	if (Args.hasArg(OPT_enable_marking_value)) {
 		Opts.enable_marking = true;
 	}
+	if (Args.hasArg(OPT_dump_ir_value)) {
+		Opts.dump_ir = true;
+	}
 	// added by chenxiong end
 
   Opts.BranchTargetEnforcement = Args.hasArg(OPT_mbranch_target_enforce);

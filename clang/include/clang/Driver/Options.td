@@ -3228,6 +3228,8 @@ def enable_profiling_EQ : Joined<["-", "--"], "enable_profiling=">, Flags<[Drive
   HelpText<"Do profiling for each function.">;
 def enable_marking_EQ : Joined<["-", "--"], "enable_marking=">, Flags<[DriverOption]>,
   HelpText<"Do marking for each function.">;
+def dump_ir_EQ : Joined<["-", "--"], "dump_ir=">, Flags<[DriverOption]>,
+  HelpText<"Dump LLVM IR.">;
 // added by chenxiong end
 
 include "CC1Options.td"

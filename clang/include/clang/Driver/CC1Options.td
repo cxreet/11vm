@@ -624,6 +624,8 @@ def enable_profiling_value : Joined<["-"], "enable_profiling=">,
   HelpText<"Do profiling for each function.">;
 def enable_marking_value : Joined<["-"], "enable_marking=">,
   HelpText<"Do marking for each function.">;
+def dump_ir_value : Joined<["-"], "dump_ir=">,
+  HelpText<"Dump LLVM IR.">;
 // added by chenxiong end
 }
 

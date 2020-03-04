@@ -186,7 +186,7 @@ bool EnableMarkingPass::runOnModule(Module &M) {
 
 	replace(module_path, "/", "@");
 	replace(module_path, ".", "$");
-	module_path = "/mnt/sdb/chenxiong/bitcodes/" + module_path;
+	module_path = "/home/chenxiong/bitcodes/chromium/" + module_path;
 
 	std::error_code EC;
 	llvm::raw_fd_ostream OS(module_path, EC, sys::fs::F_None);

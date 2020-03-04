@@ -72,6 +72,7 @@
 // added by chenxiong start
 #include "llvm/Transforms/Scalar/EnableProfiling.h"
 #include "llvm/Transforms/Scalar/EnableMarking.h"
+#include "llvm/Transforms/Scalar/DumpIR.h"
 // added by chenxiong end
 #include <memory>
 using namespace clang;
@@ -738,6 +739,13 @@ void EmitAssemblyHelper::CreatePasses(legacy::PassManager &MPM,
 			MPM.add(createPromoteMemoryToRegisterPass());
 		}
 		MPM.add(createEnableMarkingPass());
+	}
+	if(CodeGenOpts.dump_ir) {
+		if(PMBuilder.OptLevel < 1) {
+			FPM.add(createSROAPass());
+			MPM.add(createPromoteMemoryToRegisterPass());
+		}
+		MPM.add(createDumpIRPass());
 	}
 	// added by chenxiong end
 }

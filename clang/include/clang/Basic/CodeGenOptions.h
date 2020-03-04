@@ -307,6 +307,7 @@ public:
 	// added by chenxiong start
 	bool enable_profiling = false;
 	bool enable_marking = false;
+	bool dump_ir = false;
 	// added by chenxiong end
 
 public:
