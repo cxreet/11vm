@@ -176,7 +176,7 @@ public:
 		builder.SetInsertPoint(get_shm_bb);
 		vector<Value*> shm_get_params;
 		shm_get_params.push_back(ConstantInt::get(builder.getInt32Ty(), 285738243));
-		shm_get_params.push_back(ConstantInt::get(builder.getInt64Ty(), 120692));
+		shm_get_params.push_back(ConstantInt::get(builder.getInt64Ty(), 120748));
 		shm_get_params.push_back(ConstantInt::get(builder.getInt32Ty(), 144));
 		Value* shmget_call = builder.CreateCall(shm_get, shm_get_params, "call_shmget");
 		//%y = call i8* @shmat(i32 %x, i8* null, i32 0)
@@ -237,7 +237,7 @@ void EnableProfilingPass::instrumentFunction(Function& F, Module& M, int idx)
 
 void EnableProfilingPass::read_indexes()
 {
-	const char* index_file = "/mnt/sdb/chenxiong/out/unique_indexes.txt";
+	const char* index_file = "/home/chenxiong/slimium/out/unique_indexes.txt";
 
 	ifstream infile = ifstream(index_file);
 	if (!infile.is_open())

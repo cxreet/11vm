@@ -128,7 +128,7 @@ void EnableMarkingPass::instrumentFunction(Function& F, Module& M, int idx)
 
 void EnableMarkingPass::read_indexes()
 {
-	const char* index_file = "/mnt/sdb/chenxiong/out/unique_indexes.txt";
+	const char* index_file = "/home/chenxiong/slimium/out/unique_indexes.txt";
 
 	ifstream infile = ifstream(index_file);
 	if (!infile.is_open())
