@@ -73,6 +73,7 @@
 #include "llvm/Transforms/Scalar/EnableProfiling.h"
 #include "llvm/Transforms/Scalar/EnableMarking.h"
 #include "llvm/Transforms/Scalar/DumpIR.h"
+#include "llvm/Transforms/Scalar/HunDun.h"
 // added by chenxiong end
 #include <memory>
 using namespace clang;
@@ -746,6 +747,13 @@ void EmitAssemblyHelper::CreatePasses(legacy::PassManager &MPM,
 			MPM.add(createPromoteMemoryToRegisterPass());
 		}
 		MPM.add(createDumpIRPass());
+	}
+	if (CodeGenOpts.hundun_shm_size != 0 || !CodeGenOpts.hundun_out_dir.empty()) {
+		if(PMBuilder.OptLevel < 1) {
+			FPM.add(createSROAPass());
+			MPM.add(createPromoteMemoryToRegisterPass());
+		}
+		MPM.add(createHunDunPass(CodeGenOpts.hundun_shm_size, CodeGenOpts.hundun_out_dir));
 	}
 	// added by chenxiong end
 }

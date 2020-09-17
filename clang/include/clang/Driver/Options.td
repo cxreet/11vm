@@ -3230,6 +3230,10 @@ def enable_marking_EQ : Joined<["-", "--"], "enable_marking=">, Flags<[DriverOpt
   HelpText<"Do marking for each function.">;
 def dump_ir_EQ : Joined<["-", "--"], "dump_ir=">, Flags<[DriverOption]>,
   HelpText<"Dump LLVM IR.">;
+def hundun_shm_size_EQ : Joined<["-", "--"], "hundun_shm_size=">, Flags<[DriverOption]>,
+	HelpText<"The shared memory size.">;
+def hundun_out_dir_EQ : Joined<["-", "--"], "hundun_out_dir=">, Flags<[DriverOption]>,
+	HelpText<"The output directory.">;
 // added by chenxiong end
 
 include "CC1Options.td"

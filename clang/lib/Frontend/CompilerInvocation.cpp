@@ -1346,6 +1346,16 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
 	if (Args.hasArg(OPT_dump_ir_value)) {
 		Opts.dump_ir = true;
 	}
+	for (const auto& Arg : Args.getAllArgValues(OPT_hundun_shm_size_value)) {
+		StringRef Val(Arg);
+		uint32_t hundun_shm_size = 0;
+		Val.consumeInteger(0, hundun_shm_size);
+		Opts.hundun_shm_size = hundun_shm_size;
+	}
+	for (const auto& Arg : Args.getAllArgValues(OPT_hundun_out_dir_value)) {
+		StringRef Val(Arg);
+		Opts.hundun_out_dir = Val.data();
+	}
 	// added by chenxiong end
 
   Opts.BranchTargetEnforcement = Args.hasArg(OPT_mbranch_target_enforce);

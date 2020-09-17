@@ -3496,6 +3496,23 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 	if (Args.getLastArg(options::OPT_dump_ir_EQ)) {
 		CmdArgs.push_back("-dump_ir=1");
 	}
+	if (const Arg *A = Args.getLastArg(options::OPT_hundun_shm_size_EQ)) {
+		StringRef Val = A->getValue();
+		uint32_t HunDunShmKey = 0;
+		Val.consumeInteger(0, HunDunShmKey);
+
+		SmallString<8> HunDunShmKeyStr;
+		HunDunShmKeyStr.assign(std::to_string(HunDunShmKey));
+		HunDunShmKeyStr.append(Val);
+		CmdArgs.push_back(Args.MakeArgString(Twine("-hundun-shm-size-value=") + HunDunShmKeyStr));
+	}
+	if (const Arg *A = Args.getLastArg(options::OPT_hundun_out_dir_EQ)) {
+		StringRef Val = A->getValue();
+
+		SmallString<8> HunDunOutDirStr;
+		HunDunOutDirStr.assign(Val.str());
+		CmdArgs.push_back(Args.MakeArgString(Twine("-hundun-out-dir-value=") + HunDunOutDirStr));
+	}
 	// added by chenxiong end
 
   // Add the "effective" target triple.

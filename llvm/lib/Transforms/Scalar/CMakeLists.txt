@@ -13,6 +13,7 @@ add_llvm_library(LLVMScalarOpts
 	EnableProfiling.cpp
 	EnableMarking.cpp
 	DumpIR.cpp
+	HunDun.cpp
   FlattenCFGPass.cpp
   Float2Int.cpp
   GuardWidening.cpp

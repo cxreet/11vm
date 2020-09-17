@@ -1517,6 +1517,7 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
 	ShouldAddOptNone &= !CodeGenOpts.enable_profiling;
 	ShouldAddOptNone &= !CodeGenOpts.enable_marking;
 	ShouldAddOptNone &= !CodeGenOpts.dump_ir;
+	ShouldAddOptNone &= (CodeGenOpts.hundun_shm_size == 0 && CodeGenOpts.hundun_out_dir.empty());
 	// added by chenxiong end
 
   if (ShouldAddOptNone || D->hasAttr<OptimizeNoneAttr>()) {

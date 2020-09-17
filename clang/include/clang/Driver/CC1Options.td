@@ -626,6 +626,10 @@ def enable_marking_value : Joined<["-"], "enable_marking=">,
   HelpText<"Do marking for each function.">;
 def dump_ir_value : Joined<["-"], "dump_ir=">,
   HelpText<"Dump LLVM IR.">;
+def hundun_shm_size_value : Joined<["-"], "hundun-shm-size-value=">,
+	HelpText<"The shared memory size value.">;
+def hundun_out_dir_value : Joined<["-"], "hundun-out-dir-value=">,
+	HelpText<"The output directory.">;
 // added by chenxiong end
 }
 

@@ -1739,7 +1739,7 @@ MPPassManager::runOnModule(Module &M) {
     bool LocalChanged = false;
 
 		// chenxiong start
-		errs() << "Running module pass " << MP->getPassName() << '\n';
+		//errs() << "Running module pass " << MP->getPassName() << '\n';
 		// chenxiong end
 
     dumpPassInfo(MP, EXECUTION_MSG, ON_MODULE_MSG, M.getModuleIdentifier());

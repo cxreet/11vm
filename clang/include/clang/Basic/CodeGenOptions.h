@@ -308,6 +308,8 @@ public:
 	bool enable_profiling = false;
 	bool enable_marking = false;
 	bool dump_ir = false;
+	uint32_t hundun_shm_size = 0;
+	std::string hundun_out_dir = "";
 	// added by chenxiong end
 
 public:
