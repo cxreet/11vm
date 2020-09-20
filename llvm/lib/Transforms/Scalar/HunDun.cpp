@@ -11,6 +11,7 @@
 #include "llvm/IR/IRBuilder.h"
 #include <set>
 #include <map>
+#include <unordered_map>
 #include <string.h>
 #include <iostream>
 #include <fstream>
@@ -61,6 +62,22 @@ private:
 			start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
 		}
 	}
+	//===========string split begins===========
+	template<typename Out>
+	void split(const std::string &s, char delim, Out result) {
+		std::stringstream ss(s);
+		std::string item;
+		while (std::getline(ss, item, delim)) {
+			*(result++) = item;
+		}
+	}
+
+	std::vector<std::string> split(const std::string &s, char delim) {
+		std::vector<std::string> elems;
+		split(s, delim, std::back_inserter(elems));
+		return elems;
+	}
+	//============string split ends==============
 
 	void saveIR(Module &M) {
 		std::string module_path = M.getName().str();
@@ -90,9 +107,26 @@ bool HunDunPass::runOnModule(Module &M) {
 		saveIR(M);
 		return false;
 	}
-
-	errs() << "do not save ir " << this->shm_size << '\n';
 	
+	std::unordered_map<string, int> name_2_idx;
+	std::string module_path = M.getName().str();
+	replace(module_path, "/", "@");
+	replace(module_path, ".", "$");
+	std::string id_file_name = this->out_dir + "/" + module_path + ".bc.id";
+	std::ifstream infile(id_file_name.data());
+	if (infile.is_open()){
+		string line;
+		while (getline(infile, line)) {
+			vector<string> tokens = split(line, ' ');
+			string func_name = tokens[0];
+			string::size_type sz;
+			int idx = stoi(tokens[1], &sz);
+			name_2_idx[func_name] = idx;
+		}
+	}
+
+	infile.close();
+
 	// do instrumentation
   LLVMContext &C = M.getContext();
 
@@ -101,7 +135,6 @@ bool HunDunPass::runOnModule(Module &M) {
   GlobalVariable *AFLMapPtr =
       new GlobalVariable(M, PointerType::get(Int8Ty, 0), false,
                          GlobalValue::ExternalLinkage, 0, "__afl_area_ptr");
-
 
 	// instrument function for profiling
 	for (Function &F : M) {
@@ -114,7 +147,8 @@ bool HunDunPass::runOnModule(Module &M) {
     BasicBlock::iterator IP = entry_bb->getFirstInsertionPt();
     IRBuilder<> IRB(&(*IP));
 
-    unsigned int cur_loc = random() % this->shm_size;
+    unsigned int cur_loc = name_2_idx[F.getName().str()];
+		errs() << "HunDun:" << F.getName() << ' ' << cur_loc << '\n';
     ConstantInt *CurLoc = ConstantInt::get(Int32Ty, cur_loc);
 
     /* Load SHM pointer */
