@@ -141,28 +141,31 @@ bool HunDunPass::runOnModule(Module &M) {
 		// skip special functions
 		if (F.isDeclaration() || F.isIntrinsic() || F.empty())
 			continue;
-
-		// first basic block
-		BasicBlock* entry_bb = &(F.getEntryBlock());
-    BasicBlock::iterator IP = entry_bb->getFirstInsertionPt();
-    IRBuilder<> IRB(&(*IP));
-
+		
     unsigned int cur_loc = name_2_idx[F.getName().str()];
 		errs() << "HunDun:" << F.getName() << ' ' << cur_loc << '\n';
-    ConstantInt *CurLoc = ConstantInt::get(Int32Ty, cur_loc);
+		for (auto &BB : F) {
+			// first basic block
+    	BasicBlock::iterator IP = BB.getFirstInsertionPt();
+    	IRBuilder<> IRB(&(*IP));
 
-    /* Load SHM pointer */
+    	ConstantInt *CurLoc = ConstantInt::get(Int32Ty, cur_loc);
+			cur_loc += 1;
 
-    LoadInst *MapPtr = IRB.CreateLoad(AFLMapPtr);
-    MapPtr->setMetadata(M.getMDKindID("nosanitize"), MDNode::get(C, None));
-    Value *MapPtrIdx =
-        IRB.CreateGEP(MapPtr, CurLoc);
+    	/* Load SHM pointer */
 
-    /* Update bitmap */
-    IRB.CreateStore(ConstantInt::get(Int8Ty, 1), MapPtrIdx)
-        ->setMetadata(M.getMDKindID("nosanitize"), MDNode::get(C, None));
+    	LoadInst *MapPtr = IRB.CreateLoad(AFLMapPtr);
+    	MapPtr->setMetadata(M.getMDKindID("nosanitize"), MDNode::get(C, None));
+    	Value *MapPtrIdx =
+        	IRB.CreateGEP(MapPtr, CurLoc);
+
+    	/* Update bitmap */
+    	IRB.CreateStore(ConstantInt::get(Int8Ty, 1), MapPtrIdx)
+        	->setMetadata(M.getMDKindID("nosanitize"), MDNode::get(C, None));
+		}
 	}
-
+	
+	saveIR(M);
 	return true;
 }
 
