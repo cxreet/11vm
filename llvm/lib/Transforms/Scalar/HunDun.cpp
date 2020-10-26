@@ -36,17 +36,23 @@ public:
 private:
 	uint32_t shm_size;
 	string out_dir;
+	std::unordered_map<string, int> name_2_idx;
+	std::set<int> executed_bb_ids;
 
 public:
 
 	HunDunPass() : ModulePass(ID) {
 		initializeHunDunPassPass(*PassRegistry::getPassRegistry());
+		this->name_2_idx = std::unordered_map<string, int>();
+		this->executed_bb_ids = std::set<int>();
 	}
 
 	HunDunPass(uint32_t hundun_shm_size, string hundun_out_dir)
 		: ModulePass(ID) {
 		this->shm_size = hundun_shm_size;
 		this->out_dir = hundun_out_dir;
+		this->name_2_idx = std::unordered_map<string, int>();
+		this->executed_bb_ids = std::set<int>();
 		initializeHunDunPassPass(*PassRegistry::getPassRegistry());
 	}
 
@@ -91,6 +97,9 @@ private:
 		WriteBitcodeToFile(M, OS);
 		OS.flush();
 	}
+	
+	void profile_instrument(Module &M);
+	void debloat(Module &M);
 };
 }
 
@@ -108,7 +117,7 @@ bool HunDunPass::runOnModule(Module &M) {
 		return false;
 	}
 	
-	std::unordered_map<string, int> name_2_idx;
+	// read each module's Id file to get functions' start Ids	
 	std::string module_path = M.getName().str();
 	replace(module_path, "/", "@");
 	replace(module_path, ".", "$");
@@ -123,50 +132,88 @@ bool HunDunPass::runOnModule(Module &M) {
 			int idx = stoi(tokens[1], &sz);
 			name_2_idx[func_name] = idx;
 		}
+		infile.close();
+	} else {
+		llvm_unreachable("Cannot find *.bc.id files under %s.\n" % (this->out_dir));
+		return false;
 	}
 
-	infile.close();
 
-	// do instrumentation
-  LLVMContext &C = M.getContext();
+	if (this->shm_size == 42) {
 
-  IntegerType *Int8Ty  = IntegerType::getInt8Ty(C);
-  IntegerType *Int32Ty = IntegerType::getInt32Ty(C);
-  GlobalVariable *AFLMapPtr =
-      new GlobalVariable(M, PointerType::get(Int8Ty, 0), false,
-                         GlobalValue::ExternalLinkage, 0, "__afl_area_ptr");
+		// do instrumentation
+		profile_instrument(M);
+	
+		saveIR(M);
+		return true;
+	} 
+
+	if (this->shm_size == 1024) {
+		std::string profile_log_file_name = this->out_dir + "/" + "profile.log";
+		std::ifstream infile(profile_log_file_name.data());
+		if (infile.is_open()){
+			string line;
+			while (getline(infile, line)) {
+				string::size_type sz;
+				int idx = stoi(line, &sz);
+				executed_bb_ids.insert(idx);
+			}
+			infile.close();
+			
+			// first do instrumentation, for debugging purpose
+			profile_instrument(M);
+			// now, we got executed BB ids
+			debloat(M);
+			return true;
+		} else {
+			llvm_unreachable("Cannot find profile.log under %s.\n" % (this->out_dir));
+			return false;
+		}
+	}
+
+	return false;
+}
+
+void HunDunPass::profile_instrument(Module &M) {
+	LLVMContext &C = M.getContext();
+
+	IntegerType *Int8Ty  = IntegerType::getInt8Ty(C);
+	IntegerType *Int32Ty = IntegerType::getInt32Ty(C);
+	GlobalVariable *AFLMapPtr =
+		new GlobalVariable(M, PointerType::get(Int8Ty, 0), false,
+				GlobalValue::ExternalLinkage, 0, "__afl_area_ptr");
 
 	// instrument function for profiling
 	for (Function &F : M) {
 		// skip special functions
 		if (F.isDeclaration() || F.isIntrinsic() || F.empty())
 			continue;
-		
-    unsigned int cur_loc = name_2_idx[F.getName().str()];
+
+		unsigned int cur_loc = name_2_idx[F.getName().str()];
 		errs() << "HunDun:" << F.getName() << ' ' << cur_loc << '\n';
 		for (auto &BB : F) {
 			// first basic block
-    	BasicBlock::iterator IP = BB.getFirstInsertionPt();
-    	IRBuilder<> IRB(&(*IP));
+			BasicBlock::iterator IP = BB.getFirstInsertionPt();
+			IRBuilder<> IRB(&(*IP));
 
-    	ConstantInt *CurLoc = ConstantInt::get(Int32Ty, cur_loc);
+			ConstantInt *CurLoc = ConstantInt::get(Int32Ty, cur_loc);
 			cur_loc += 1;
 
-    	/* Load SHM pointer */
+			/* Load SHM pointer */
 
-    	LoadInst *MapPtr = IRB.CreateLoad(AFLMapPtr);
-    	MapPtr->setMetadata(M.getMDKindID("nosanitize"), MDNode::get(C, None));
-    	Value *MapPtrIdx =
-        	IRB.CreateGEP(MapPtr, CurLoc);
+			LoadInst *MapPtr = IRB.CreateLoad(AFLMapPtr);
+			MapPtr->setMetadata(M.getMDKindID("nosanitize"), MDNode::get(C, None));
+			Value *MapPtrIdx =
+				IRB.CreateGEP(MapPtr, CurLoc);
 
-    	/* Update bitmap */
-    	IRB.CreateStore(ConstantInt::get(Int8Ty, 1), MapPtrIdx)
-        	->setMetadata(M.getMDKindID("nosanitize"), MDNode::get(C, None));
+			/* Update bitmap */
+			IRB.CreateStore(ConstantInt::get(Int8Ty, 1), MapPtrIdx)
+				->setMetadata(M.getMDKindID("nosanitize"), MDNode::get(C, None));
 		}
 	}
-	
-	saveIR(M);
-	return true;
+}
+
+void HunDunPass::debloat(Module &M) {
 }
 
 namespace llvm {
