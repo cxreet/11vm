@@ -130,7 +130,7 @@ bool HunDunPass::runOnModule(Module &M) {
 			string func_name = tokens[0];
 			string::size_type sz;
 			int idx = stoi(tokens[1], &sz);
-			name_2_idx[func_name] = idx;
+			this->name_2_idx[func_name] = idx;
 		}
 		infile.close();
 	} else {
@@ -161,9 +161,10 @@ bool HunDunPass::runOnModule(Module &M) {
 			infile.close();
 			
 			// first do instrumentation, for debugging purpose
-			profile_instrument(M);
+			//profile_instrument(M);
 			// now, we got executed BB ids
 			debloat(M);
+			saveIR(M);
 			return true;
 		} else {
 			llvm_unreachable("Cannot find profile.log under %s.\n" % (this->out_dir));
@@ -189,7 +190,7 @@ void HunDunPass::profile_instrument(Module &M) {
 		if (F.isDeclaration() || F.isIntrinsic() || F.empty())
 			continue;
 
-		unsigned int cur_loc = name_2_idx[F.getName().str()];
+		unsigned int cur_loc = this->name_2_idx[F.getName().str()];
 		errs() << "HunDun:" << F.getName() << ' ' << cur_loc << '\n';
 		for (auto &BB : F) {
 			// first basic block
@@ -214,6 +215,86 @@ void HunDunPass::profile_instrument(Module &M) {
 }
 
 void HunDunPass::debloat(Module &M) {
+	errs() << "Debloat " << M.getName() << "\n";
+
+	LLVMContext &C = M.getContext();
+
+	IntegerType *Int8Ty  = IntegerType::getInt8Ty(C);
+	IntegerType *Int32Ty = IntegerType::getInt32Ty(C);
+	GlobalVariable *AFLMapPtr =
+		new GlobalVariable(M, PointerType::get(Int8Ty, 0), false,
+				GlobalValue::ExternalLinkage, 0, "__afl_area_ptr");
+
+	for (Function &F : M) {
+		// skip special functions
+		if (F.isDeclaration() || F.isIntrinsic() || F.empty())
+			continue;
+
+		unsigned int cur_loc = this->name_2_idx[F.getName().str()];
+
+		for (auto &BB : F) {
+			// first basic block
+			BasicBlock::iterator IP = BB.getFirstInsertionPt();
+			Instruction *firstInsertPt = &(*IP);
+			bool toRemove = false;
+			vector<Instruction*> removeInsts;
+			for (Instruction &inst : BB) {
+				if ((&inst) == firstInsertPt) {
+					toRemove = true;
+					removeInsts.push_back(&inst);
+					continue;
+				}
+
+				if (!toRemove)
+					continue;
+				removeInsts.push_back(&inst);
+			}
+
+			IRBuilder<> IRB(&(*IP));
+
+			ConstantInt *CurLoc = ConstantInt::get(Int32Ty, cur_loc);
+
+			/* Load SHM pointer */
+
+			LoadInst *MapPtr = IRB.CreateLoad(AFLMapPtr);
+			MapPtr->setMetadata(M.getMDKindID("nosanitize"), MDNode::get(C, None));
+			Value *MapPtrIdx =
+				IRB.CreateGEP(MapPtr, CurLoc);
+
+			/* Update bitmap */
+			IRB.CreateStore(ConstantInt::get(Int8Ty, 1), MapPtrIdx)
+				->setMetadata(M.getMDKindID("nosanitize"), MDNode::get(C, None));
+
+			if (executed_bb_ids.find(cur_loc) == executed_bb_ids.end()) {
+				// not executed: remove instructions
+				//IRB.CreateUnreachable()
+					//->setMetadata(M.getMDKindID("nosanitize"), MDNode::get(C, None));
+				errs() << "HunDun: disable BB " << cur_loc << '\n';
+				/*
+				errs() << BB << '\n';
+				errs() << "====\n";
+				for (Instruction *inst : removeInsts) 
+					errs() << *inst << '\n';
+				errs() << "====\n";
+				*/
+				for (Instruction *inst : removeInsts) {
+					//errs() << *inst << '\n';
+					if (inst->isTerminator())
+						continue;
+					if (!inst->use_empty())
+						inst->replaceAllUsesWith(UndefValue::get(inst->getType()));
+					inst->eraseFromParent();
+				}
+				//errs() << BB << '\n';
+
+
+			} else {
+				// executed
+			}
+
+			cur_loc += 1;
+		}
+	}
 }
 
 namespace llvm {
