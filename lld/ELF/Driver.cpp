@@ -1209,6 +1209,9 @@ void LinkerDriver::createFiles(opt::InputArgList &args) {
     }
   }
 
+	/* CHENXIONG START */
+	/* CHENXIONG END */
+
   if (files.empty() && errorCount() == 0)
     error("no input files");
 }
@@ -1829,6 +1832,18 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &args) {
   for (BinaryFile *f : binaryFiles)
     for (InputSectionBase *s : f->getSections())
       inputSections.push_back(cast<InputSection>(s));
+
+	/* CHENXIONG START */
+	errs() << "LLD-Input-Files: ";
+	for (InputFile *f : objectFiles) {
+		errs() << f->getName() << ' ';
+	}
+	for (BinaryFile *f : binaryFiles) {
+		errs() << f->getName() << ' ';
+	}
+	errs() << '\n';
+	errs() << "LLD-Output-File: " << config->outputFile << '\n';
+	/* CHENXIONG END */
 
   llvm::erase_if(inputSections, [](InputSectionBase *s) {
     if (s->type == SHT_LLVM_SYMPART) {
